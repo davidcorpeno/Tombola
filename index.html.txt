@@ -1,0 +1,83 @@
+<!-- Archivo: index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tómbola de Amigo Secreto - Online</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd" />
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .card{width:360px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:18px;text-align:center}
+    textarea{width:100%;height:100px;border-radius:8px;padding:10px;border:1px solid #ddd;font-size:14px}
+    button{background:#0d6efd;color:#fff;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;margin:8px 4px}
+    #nameDisplay{margin-top:12px;font-weight:700;font-size:18px}
+    .small{font-size:12px;color:#555}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Tómbola - Amigo Secreto</h2>
+    <p class="small">Escribe los nombres (uno por línea). Todos usan la misma tómbola online.</p>
+    <textarea id="nameInput" placeholder="Ana\nLuis\nCarla\nPedro"></textarea>
+    <div>
+      <button id="loadBtn">Cargar nombres</button>
+      <button id="drawBtn">Sacar nombre</button>
+    </div>
+    <div id="nameDisplay"></div>
+    <p class="small">(Todos los usuarios verán los nombres actualizados en tiempo real.)</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDgSmEyrFPo10NpjjEWo81otOMTlYDK_Jc",
+      authDomain: "tombola-7b8b5.firebaseapp.com",
+      projectId: "tombola-7b8b5",
+      storageBucket: "tombola-7b8b5.firebasestorage.app",
+      messagingSenderId: "852424024470",
+      appId: "1:852424024470:web:aadc7dc3b17617e7d87db7",
+      measurementId: "G-0DGDLG6N1G",
+      databaseURL: "https://tombola-7b8b5-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const namesRef = ref(db, "nombres");
+
+    // Mostrar lista de nombres en tiempo real
+    const display = document.getElementById("nameDisplay");
+    let currentNames = [];
+
+    onValue(namesRef, (snapshot) => {
+      currentNames = snapshot.val() || [];
+      display.innerText = "Nombres restantes: " + currentNames.length;
+    });
+
+    // Cargar nombres en Firebase
+    document.getElementById('loadBtn').addEventListener('click', async ()=>{
+      const text = document.getElementById('nameInput').value.trim();
+      const list = text.split(/\n+/).map(s=>s.trim()).filter(s=>s);
+      if(list.length===0){ alert('Escribe al menos 1 nombre.'); return; }
+      await set(namesRef, list);
+      alert('Nombres cargados online: '+list.length);
+    });
+
+    // Sacar nombre aleatorio y eliminarlo de Firebase
+    document.getElementById('drawBtn').addEventListener('click', async ()=>{
+      if(currentNames.length===0){ alert('No hay nombres disponibles.'); return; }
+      const i = Math.floor(Math.random()*currentNames.length);
+      const picked = currentNames.splice(i,1)[0];
+      await set(namesRef, currentNames);
+      alert('¡Tu persona: ' + picked + '!');
+    });
+
+  </script>
+</body>
+</html>
+
+ 
